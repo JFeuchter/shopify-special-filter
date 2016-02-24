@@ -1,0 +1,94 @@
+<!-- I use this product quickview to load the products separately on the collection page. You should use your own product.quickview.liquid page and just adjust it to only load the info of the product you need to show to set it up in the collection. -->
+{% layout none %}
+<!-- Shopping items -->
+    <div class="shopping-item">
+      <!-- Image -->
+      <div class="image"><span class="image-helper"></span>
+        <a href="{{ product.url | within: collection }}"><img class="img-responsive" src="{{ product.featured_image | product_img_url: 'medium' }}" alt="" /></a>
+      </div>
+      <!-- Shopping item name / Heading -->
+      {% assign tag_price = 0 %}
+      {% assign tag = 'default' %}
+      {% if customer.tags.size > 0 %}
+        {% for cust_tag in customer.tags %}
+          {% if product.metafields.shappify_csp[cust_tag] %}
+            {% assign tag = cust_tag %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if product.metafields.shappify_csp[tag] %}
+        {% assign tag_price = 1 %}
+      {% endif %}
+      {% if tag_price != 1 %}
+        <h5 class="specialTitle">
+          <a href="/collections/vendors?q={{ product.vendor }}" class="productVendor">{{ product.vendor }}</a><br/>
+          <a href="{{ product.url | within: collection }}" class="productTitle">{{ product.title }}</a>
+        </h5>
+      	<div class="priceList">
+          {% if product.price_varies %} 
+          <span><small style="font-size:80%;color: #A6A6A6;">desde</small> {% include 'shappify-bdl-min-price' with product %}</span>
+          {% elsif product.metafields.inventory.ShappifySale == "true" %}
+          <del class="discountprice" style="font-size:13px;">{{ product.compare_at_price | money }}</del> <span class="red">{{ product.price | money }}</span>
+          {% else %}
+          <span>{% include 'shappify-bdl-min-price' with product %}</span>
+          {% endif %}	
+     	</div>
+      {% else %}
+        {% capture attribute_price_min %}{{tag}}_raw_lownum{% endcapture %}
+        {% capture attribute_price_max %}{{tag}}_price_high{% endcapture %}
+        {% capture attribute_price %}{{tag}}{% endcapture %}
+        <h5 class="specialTitle">
+          <a href="/collections/vendors?q={{ product.vendor }}" class="productVendor">{{ product.vendor }}</a><br/>
+          <a href="{{ product.url | within: collection }}">{{ product.title }}</a>
+        </h5>
+      	<div class="priceList">
+          {% if product.metafields.inventory.ShappifySale == "true" %}
+          <del class="discountprice" style="font-size:13px;">{{ product.compare_at_price | money }}</del> <span class="red">{{ product.price | money }}</span>
+          {% elsif product.selected_or_first_available_variant.compare_at_price %} 
+          <del class="discountprice" style="font-size:13px;">{{ product.selected_or_first_available_variant.compare_at_price | money }}</del> <span class="">{{ product.price | money }}</span>
+          {% else %}
+          <span>{{ product.metafields.shappify_csp[attribute_price] }}</span>
+          {% endif %}
+     	</div>
+      {% else %}
+
+      {% endif %}
+
+      <div class="clearfix"></div>
+      <span class="shopify-product-reviews-badge" data-id="{{ product.id }}"></span>
+      <!-- <i class="fa fa-star yellow"></i>
+      <i class="fa fa-star yellow"></i>
+      <i class="fa fa-star yellow"></i>
+      <i class="fa fa-star yellow"></i>
+      <i class="fa fa-star-o yellow"></i> -->
+      <hr>
+      {% if product.available %}
+      	<!-- Buy now button -->
+      	{% assign firstProduct = true %}
+      	{% for variant in product.variants %}
+      	 {% if variant.available  %}
+      		{% if firstProduct %}
+      		<a href="javascript:void(0);" class="btn btn-color pull-left" onClick="$('#addToCart-{{ variant.id }}').click();" style=""><i class="fa fa-shopping-cart"></i>&nbsp;&nbsp;Agregar</a>
+            <form method="post" action="/cart/add" style="display:none;">
+              <input type="hidden" name="id" value="{{ variant.id }}" />
+              <input type="hidden" name="return_to" value="back" />
+              <input type="submit" value="Agregar" id="addToCart-{{ variant.id }}" />
+              <div id="addWishListBtn-{{ product.id }}">
+              {% include "snippet-giftreggie-wishlist-button-visible" with product %}
+              </div>
+            </form>	
+      		{% assign firstProduct = false %}
+      		{% endif %}
+      	{% endif %}
+      	{% endfor %}
+      {% else %}
+        <!-- Buy now button -->
+        <a id="addToCart-{{ product.id }}" herf="#" class="btn btn-warning pull-left" onclick="return false;" style="cursor:default"><i class="fa fa-ban"></i>&nbsp;&nbsp;Agotado</a>
+      {% endif %}
+       <!-- Media icon -->
+        <span class="p-media pull-right">
+          {% if customer %}<a href="#" class="b-tooltip" data-placement="top" title="agregar a favoritos" onClick="$('#addWishListBtn-{{ product.id }} .add-wishlist').click(); return false;"><i class="fa fa-heart color"></i></a>&nbsp;{% endif %}
+        </span>
+        <div class="clearfix"></div>
+        {% include 'specialtags' %}
+    </div>

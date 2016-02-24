@@ -1,0 +1,131 @@
+<!-- JQuery UI for the range slider NOTE: youll need the jquery.js as well -->
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<!-- plus a jQuery UI theme, here I use "flick" -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/flick/jquery-ui.css">
+
+<!-- Thanks to bknights for the code :D -->
+
+<script> 
+  function receiveHighPriceItem(elem) {
+    //extract info of the highest price item here and do whatever with it.
+    //$('#highest-price').append(elem.firstChild.nodeValue);
+    $('#minPriceInput').attr('max', elem.firstChild.nodeValue);
+    $('#maxPriceInput').attr('max', elem.firstChild.nodeValue);
+    $(".slider").slider("option", "max", elem.firstChild.nodeValue);
+    $('#maxPriceInput').val(elem.firstChild.nodeValue);
+    $(".slider").slider('values', 1, elem.firstChild.nodeValue);
+    $(".slider").slider('option', 'step', Math.round(elem.firstChild.nodeValue/6))
+    .slider("pips", {
+        rest: "label",
+        labels: { first: "Min", last: "Max" }
+    })                
+    .slider("float");
+  }
+  window.addEventListener('load', function() {
+    if (!window.parent || window.parent === window) { // check so no infinite iframes
+      // jQuery free example
+      var iframe = document.createElement('IFRAME');
+      iframe.setAttribute('style', 'visibility:hidden;height:0; width:100%;');
+      // Here I set on the IFrame a special colection page which will get me only the highest price product on the collection and set it on the iframetest. Youll need to create a collection.hprice.liquid for this to work.
+      iframe.setAttribute('src', '?sort_by=price-descending&checkhigh=T&view=hprice');
+      document.getElementsByTagName('iframetest')[0].appendChild(iframe);
+    } else if (window.parent && window.parent !== window && window.parent.receiveHighPriceItem) {
+      window.parent.receiveHighPriceItem(document.getElementById('highPriceItem'));
+    }
+  }); 
+</script>
+
+<!-- iframe needed to get highest price -->
+<iframetest></iframetest>
+
+<!-- This is the code for the filters. I used bootstrap, so if you want it for any other theme, youll have to change the classes a bit. -->
+<div class="col-md-3 col-sm-4 col-md-pull-9 col-sm-pull-8">
+  <!-- Shopping Sidebar -->
+  <div class="sidebar">
+    <!-- Heading -->
+    <!-- If the collection has a navigation group with the same name as the collection handle, It will show up as a list of links underneath. -->
+    {% if linklists[collection.handle].links != empty %}
+    <h2>Categories</h2>
+    <!-- Sidebar Menu -->
+    <ul class="list-unstyled my-list category-list">
+      {% for childlink in linklists[collection.handle].links %}
+        <li><a href="{{ childlink.url }}">{{ childlink.title | escape }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <!-- Heading -->
+    <!-- Here is the first filter by price. I use the JQuery ui range slider. But what is important is the hidden input boxes. What they have will filter the list  -->
+    <h2>Precio</h2>
+    <ul class="list-unstyled my-list price-list">
+      <li>
+        <p>
+          <input type="text" id="amount" readonly class="color" style="border:0; font-weight:bold;">
+        </p>
+
+        <div id="slider-range"></div>
+        <form class="form-group">
+          <div class="row">
+          	<div class="col-lg-6 col-sm-12">
+              <!-- Lowset price it will be filter by -->
+              <input class="form-control" id="minPriceInput" type="number" name="min" value="0" min="0" max="{{ top_price | divided_by: 100 }}" />
+            </div>
+            <div class="col-lg-6 col-sm-12">
+              <!-- Highest price it will be filter by -->
+              <input class="form-control" id="maxPriceInput" type="number" name="max" value="{{ top_price | divided_by: 100 }}" min="0" max="{{ top_price | divided_by: 100 }}" />
+            </div>
+          </div>
+          <!-- Here we hid the collection handle for use in the script -->
+          <input type="hidden" name="collection" value="{{ collection.handle }}" />
+          <!-- For now Im using submit button to filter the data, but the idea is to make it work when there is a change on the fitlers later on. -->
+          <input type="submit" name="submit" value="submit" />
+        </form>
+      </li>
+    </ul>
+    <!-- Heading -->
+    <!-- This is the first filter and is controlled by the tags. If the products in this collection have gender tags below, this will show the checkbox for each of the assign tags. Be sure the tags below are written exactly as the tags on your admin for each product. -->
+    {% assign tags = 'Male,Female,Unisex' | replace: ' ,', ',' | replace: ', ', ',' | split: ',' %}
+    <h2>Gender</h2>
+    <!-- Sidebar Menu -->
+    <ul class="list-unstyled my-list price-list">
+      <li><input class="col-filter" type="checkbox" value="todasC" /> &nbsp;Deselect</li>
+      {% for tag in tags %}
+      	{% assign tag-special = tag | downcase %}
+        {% if current_tags contains tag-special %}
+          <li><input class="col-filter" type="checkbox" checked value="{{ tag | handle }}" /> &nbsp;{{ tag }}</li>
+        {% elsif collection.all_tags contains tag %}
+          <li><input class="col-filter" type="checkbox" value="{{ tag | handle }}" /> &nbsp;{{ tag }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    <!-- Heading -->
+    <!-- This is the second filter and is controlled by the tags. If the products in this collection have age tags below, this will show the checkbox for each of the assign tags. Be sure the tags below are written exactly as the tags on your admin for each product. -->
+    {% assign tags = '1-year,2-years,3-years,etc' | replace: ',',',' | replace: ',',',' | split: ',' %}
+    <h2>Age</h2>
+    <!-- Sidebar Menu -->
+    <ul class="list-unstyled my-list feature-list">
+      <li><input class="col-filter" type="checkbox" value="todasA" /> &nbsp;Deselect</li>
+      {% for tag in tags %}
+        {% if current_tags contains tag %}
+          <li><input class="col-filter" type="checkbox" checked value="{{ tag | handle }}" /> &nbsp;{{ tag }}</li>
+        {% elsif collection.all_tags contains tag %}
+          <li><input class="col-filter" type="checkbox" value="{{ tag | handle }}" /> &nbsp;{{ tag }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    <!-- Heading -->
+    <!-- This is controlled by all the vendors which the collection have. To filter by vendor. -->
+    <h2>Marcas</h2>
+    <!-- Sidebar Menu -->
+    <ul class="list-unstyled my-list brand-list">
+      <li><input class="col-filter" type="checkbox" value="todasD" /> &nbsp;Deselect</li>
+      {% for product_vendor in collection.all_vendors %}
+      	{% assign my_variable = product_vendor | handle %}
+      	{% if current_tags contains my_variable %}
+        <li><input class="" name="marcas" type="checkbox" checked value="{{ product_vendor }}" /> &nbsp;{{ product_vendor }}</li>
+      	{% else %}
+      	<li><input class="" name="marcas" type="checkbox" value="{{ product_vendor }}" /> &nbsp;{{ product_vendor }}</li>
+      	{% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+</div>

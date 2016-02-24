@@ -1,0 +1,15 @@
+<!-- First we set layout to none, so the theme.liquid will not be loeaded. -->
+{% layout none %}
+<script type="text/javascript">
+// This will send the highest product price to the parent window page.
+  window.addEventListener('load', function() {
+    if (window.parent && window.parent !== window && window.parent.receiveHighPriceItem) {
+      window.parent.receiveHighPriceItem(document.getElementById('highPriceItem'));
+    }
+  });
+</script>
+
+<!-- Thanks to bknights for the code :D -->
+<!-- Here is the magic, you get the higest price on the page, but since your looking at the collection filtered by highes to lowest price youll get here the highest product price. -->
+{% assign products = collection.products | sort: 'price' %} 
+<div id="highPriceItem" style="display:block;">{{ products[-1].price_max | divided_by: 100 | plus: 100 }}</div> 
