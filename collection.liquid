@@ -2,6 +2,8 @@
 <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <!-- plus a jQuery UI theme, here I use "flick" -->
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/flick/jquery-ui.css">
+<!-- and the js which does the magic -->
+{{ 'special-filter-script.js' | asset_url | script_tag }}
 
 <!-- Thanks to bknights for the code :D -->
 
