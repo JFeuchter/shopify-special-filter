@@ -176,6 +176,7 @@
         type: 'GET',
         url: 'http://bebe2go.myshopify.com/collections/' + collection + '.json' ,
         dataType: 'jsonp',
+        async: false,
         beforeSend: function() {
           $('#productRow').append('<img id="product-filter-img" class="img-responsive" src=\"' + imgsrc + '" />');
         },
@@ -187,57 +188,65 @@
           $('#productRow').html('');
           $('#moreProducts').remove();
           $('.product').remove();
-          //This while goes through all the existing products, page by page. Or it will stop if it gets to 21 products shown printed on the collection page.
-          while ( current_product <= total_product || cont_max_prod <= 21 ) {
-          	//ajax to get all the products from the collection.
-            $.ajax({
-              type: 'GET',
-              url: json,
-              dataType: 'jsonp',
-              success: function (data) {
-                //Call for doFilter function to filter the products from the page its going through
-                var output = doFilter(data,min,max);
-                //Check if there are products after all the filters and pages have passed. If there are no products it show a message saying no product was found
-                if (output.length == 0) {
-                  $('#productRow').append('<div class="col-md-12 col-sm-12 product"><h3 style="text-align:center;">¡No se encontro ningun producto bajo esos filtros! D: Intenta de nuevo.</h3></div>');
-                } else (output.length != 0) {
-                  //Go through all the filtered list of products in the page.
-                  for (var i = 0; ((i < output.length)); i++) {
-                    var item = output[i];
 
-                    //Ajax to get 
-                    $.ajax({
-                      type: 'GET',
-                      url: "/products/" + item.handle + "?view=quick" ,
-                      dataType: 'html',
-                      success: function (data) {
-                      	//If 
-                        if (cont_max_prod <= 20) {
-                          htmlProduct = data;
-                          $('#productRow').append('<div class="col-md-4 col-sm-6 product">' + htmlProduct + '</div>');
-                        } 
-                        cont_max_prod ++;
-                        if (cont_max_prod == 21) {
-                          page ++;
-                          $('#productRow').append('<div id="more-filtered-products" class="product row"><div class="col-xl-12 col-sm-12" style="text-align:center;"><button class="more-filtered-products btn btn-default" onclick="getProductList(' + page + ');">Mostrar mas productos</button></div></div>');
-                        }
+          }
+      });
+      //This while goes through all the existing products, page by page. Or it will stop if it gets to 21 products shown printed on the collection page.
+      while ( current_product <= total_product && cont_max_prod <= 21 ) {
+      	//ajax to get all the products from the collection.
+        if ( cont_max_prod <= 21 ) {
+          $.ajax({
+            type: 'GET',
+            url: json,
+            dataType: 'jsonp',
+            async: false,
+            success: function (data) {
+              //Call for doFilter function to filter the products from the page its going through
+              var output = doFilter(data,min,max);
+              //Check if there are products after all the filters and pages have passed. If there are no products it show a message saying no product was found
+              if (output.length == 0) {
+                $('#productRow').append('<div class="col-md-12 col-sm-12 product"><h3 style="text-align:center;">¡No se encontro ningun producto bajo esos filtros! D: Intenta de nuevo.</h3></div>');
+              } else (output.length != 0) {
+                //Go through all the filtered list of products in the page.
+                for (var i = 0; ((i < output.length)); i++) {
+                  var item = output[i];
+
+                  //Ajax to get 
+                  $.ajax({
+                    type: 'GET',
+                    url: "/products/" + item.handle + "?view=quick" ,
+                    dataType: 'html',
+                    async: false,
+                    success: function (data) {
+                    	//If 
+                      if (cont_max_prod <= 20) {
+                        htmlProduct = data;
+                        $('#productRow').append('<div class="col-md-4 col-sm-6 product">' + htmlProduct + '</div>');
+                      } 
+                      cont_max_prod ++;
+                      if (cont_max_prod == 21) {
+                        page ++;
+                        $('#productRow').append('<div id="more-filtered-products" class="product row"><div class="col-xl-12 col-sm-12" style="text-align:center;"><button class="more-filtered-products btn btn-default" onclick="getProductList(' + page + ');">Mostrar mas productos</button></div></div>');
                       }
-                    });
-                  }
+                    }
+                  });
                 }
               }
-            });
-            if (page == 1) {
-              $('#productRow').find('#product-filter-img').remove();
-              //$('#more-filtered-products').remove();
             }
-            page = page + 1; 
-            json = doProducts(collection, 21, page);
-            current_product = current_product + 21;
+          });
+
+          if (page == 1) {
+            $('#productRow').find('#product-filter-img').remove();
+            //$('#more-filtered-products').remove();
           }
-          alert('Page: ' + page + ' Products: ' + current_product + ' Total Products: ' + total_product);
+          page = page + 1; 
+          json = doProducts(collection, 21, page);
+          current_product = current_product + 21;
         }
-      });
+      }
+      //This alert is for me to know which product im in. 
+      alert('Page: ' + page + ' Products: ' + current_product + ' Total Products: ' + total_product);
+        
     });
     
   });
@@ -403,53 +412,55 @@
         total_product = data.collection.products_count;
         $('#product-filter-img').remove();
 
-        //This while goes through all the existing products, page by page. Or it will stop if it gets to 21 products shown.
-        while ( current_product <= total_product && cont_max_prod <= 21 ) {
-          $.ajax({
-            type: 'GET',
-            url: json,
-            dataType: 'jsonp',
-            success: function (data) {
-              //Call for a function to filter the products from the page its going through
-              var output = doFilters(data,min,max);
-              //Check if there are products after all the filters and pages have passed. If there are no products it show a message saying no product was found
-              if (output.length == 0 && current_product_ajax >= total_product) {
-                $('#productRow').append('<div class="col-md-12 col-sm-12 product"><h3 style="text-align:center;">¡No se encontro ningun producto bajo esos filtros! D: Intenta de nuevo.</h3></div>');
-              } else if (output.length != 0) {
-                //Go through all the filtered list of products in the page.
-                for (var i = 0; ((i < output.length)); i++) {
-                  var item = output[i];
-                  $.ajax({
-                    type: 'GET',
-                    url: "/products/" + item.handle + "?view=quick" ,
-                    dataType: 'html',
-                    success: function (data) {
-                      if (cont_max_prod <= 20) {
-                        htmlProduct = data;
-                        $('#productRow').append('<div class="col-md-4 col-sm-6 product">' + htmlProduct + '</div>');
-                      }  
-                      cont_max_prod ++;
-                      if (cont_max_prod == 21) {
-                        page ++;
-                        $('#productRow').append('<div id="more-filtered-products" class="product row"><div class="col-xl-12 col-sm-12" style="text-align:center;"><button class="more-filtered-products btn btn-default" onclick="getProductList(' + page + ');">Mostrar mas productos</button></div></div>');
-                      }
-                    }
-                  });
-                }
-              }
-              current_product_ajax = current_product_ajax + 21;
-            }
-          });
-          if (page == 1) {
-            $('#productRow').find('#product-filter-img').remove();
-            //$('#more-filtered-products').remove();
-          }
-          page = page + 1; 
-          json = doProductsa(collection, 21, page);
-          current_product = current_product + 21;
         }
-      }
     });
+    //This while goes through all the existing products, page by page. Or it will stop if it gets to 21 products shown.
+    while ( current_product <= total_product && cont_max_prod <= 21 ) {
+      if ( cont_max_prod <= 21 ) {
+        $.ajax({
+          type: 'GET',
+          url: json,
+          dataType: 'jsonp',
+          success: function (data) {
+            //Call for a function to filter the products from the page its going through
+            var output = doFilters(data,min,max);
+            //Check if there are products after all the filters and pages have passed. If there are no products it show a message saying no product was found
+            if (output.length == 0 && current_product_ajax >= total_product) {
+              $('#productRow').append('<div class="col-md-12 col-sm-12 product"><h3 style="text-align:center;">¡No se encontro ningun producto bajo esos filtros! D: Intenta de nuevo.</h3></div>');
+            } else if (output.length != 0) {
+              //Go through all the filtered list of products in the page.
+              for (var i = 0; ((i < output.length)); i++) {
+                var item = output[i];
+                $.ajax({
+                  type: 'GET',
+                  url: "/products/" + item.handle + "?view=quick" ,
+                  dataType: 'html',
+                  success: function (data) {
+                    if (cont_max_prod <= 20) {
+                      htmlProduct = data;
+                      $('#productRow').append('<div class="col-md-4 col-sm-6 product">' + htmlProduct + '</div>');
+                    }  
+                    cont_max_prod ++;
+                    if (cont_max_prod == 21) {
+                      page ++;
+                      $('#productRow').append('<div id="more-filtered-products" class="product row"><div class="col-xl-12 col-sm-12" style="text-align:center;"><button class="more-filtered-products btn btn-default" onclick="getProductList(' + page + ');">Mostrar mas productos</button></div></div>');
+                    }
+                  }
+                });
+              }
+            }
+            current_product_ajax = current_product_ajax + 21;
+          }
+        });
+        if (page == 1) {
+          $('#productRow').find('#product-filter-img').remove();
+          //$('#more-filtered-products').remove();
+        }
+        page = page + 1; 
+        json = doProductsa(collection, 21, page);
+        current_product = current_product + 21;
+      }
+    }
   }
 
 
